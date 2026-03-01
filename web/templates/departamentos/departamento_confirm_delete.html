@@ -59,18 +59,37 @@
                     </div>
                     {% endif %}
                     {% endwith %}
-
+                    {% if denuncias_count > 0 %}
+  <div class="alert alert-danger mt-3" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    <strong>No se puede eliminar:</strong> Este departamento tiene {{ denuncias_count }} denuncia(s) asociada(s).
+  </div>
+{% endif %}
+{% if tipos_count > 0 %}
+  <div class="alert alert-danger mt-3" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    <strong>No se puede eliminar:</strong> Este departamento tiene {{ tipos_count }} tipo(s) de denuncia asignado(s).
+  </div>
+{% endif %}
                     <form method="post" class="mt-4">
-                        {% csrf_token %}
-                        <div class="d-flex justify-content-between">
-                            <a href="{% url 'web:departamento_detail' object.pk %}" class="btn btn-secondary">
-                                <i class="bi bi-arrow-left me-2"></i>Cancelar
-                            </a>
-                            <button type="submit" class="btn btn-danger">
-                                <i class="bi bi-trash me-2"></i>Sí, Eliminar Departamento
-                            </button>
-                        </div>
-                    </form>
+  {% csrf_token %}
+  <div class="d-flex justify-content-between">
+    <a href="{% url 'web:departamento_detail' object.pk %}" class="btn btn-secondary">
+      <i class="bi bi-arrow-left me-2"></i>Cancelar
+    </a>
+
+    {% if denuncias_count > 0 or tipos_count > 0 %}
+      <button type="submit" class="btn btn-danger" disabled
+              title="No se puede eliminar porque tiene denuncias o tipos asignados">
+        <i class="bi bi-trash me-2"></i>Sí, Eliminar Departamento
+      </button>
+    {% else %}
+      <button type="submit" class="btn btn-danger">
+        <i class="bi bi-trash me-2"></i>Sí, Eliminar Departamento
+      </button>
+    {% endif %}
+  </div>
+</form>
                 </div>
             </div>
         </div>

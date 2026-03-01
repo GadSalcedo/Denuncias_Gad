@@ -2110,6 +2110,37 @@ class DepartamentosListView(FuncionarioRequiredMixin, ListView):
     def get_queryset(self):
         return Departamentos.objects.order_by("nombre")
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+
+        # IDs SOLO de la página actual (paginación)
+        dep_ids = list(ctx["departamentos"].values_list("pk", flat=True))
+
+        # Conteo de denuncias por departamento (usa pk, no id)
+        den_counts = (
+            Denuncias.objects
+            .filter(asignado_departamento_id__in=dep_ids)
+            .values("asignado_departamento_id")
+            .annotate(c=Count("pk"))
+        )
+        dep_to_den = {i["asignado_departamento_id"]: i["c"] for i in den_counts}
+
+        # Conteo de tipos asignados por departamento (usa pk, no id)
+        tipo_counts = (
+            TipoDenunciaDepartamento.objects
+            .filter(departamento_id__in=dep_ids)
+            .values("departamento_id")
+            .annotate(c=Count("pk"))
+        )
+        dep_to_tipo = {i["departamento_id"]: i["c"] for i in tipo_counts}
+
+        # Inyectar al objeto para el template
+        for d in ctx["departamentos"]:
+            d.denuncias_count = dep_to_den.get(d.pk, 0)
+            d.tipos_count = dep_to_tipo.get(d.pk, 0)
+            d.can_delete = (d.denuncias_count == 0 and d.tipos_count == 0)
+
+        return ctx
 
 class DepartamentosCreateView(CrudMessageMixin, FuncionarioRequiredMixin, CreateView):
     model = Departamentos
@@ -2134,12 +2165,54 @@ class DepartamentosUpdateView(CrudMessageMixin, FuncionarioRequiredMixin, Update
     login_url = "web:login"
 
 
+from django.contrib import messages
+from django.shortcuts import redirect
+
 class DepartamentosDeleteView(CrudMessageMixin, FuncionarioRequiredMixin, DeleteView):
     model = Departamentos
     template_name = "departamentos/departamento_confirm_delete.html"
     success_url = reverse_lazy("web:departamento_list")
     login_url = "web:login"
 
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+
+        denuncias_count = Denuncias.objects.filter(asignado_departamento=self.object).count()
+        if denuncias_count > 0:
+            messages.error(
+                request,
+                f"❌ No se puede eliminar '{self.object.nombre}' porque tiene {denuncias_count} denuncia(s) asociada(s)."
+            )
+            return redirect("web:departamento_detail", pk=self.object.pk)
+
+        funcionarios_count = Funcionarios.objects.filter(departamento=self.object).count()
+        if funcionarios_count > 0:
+            messages.warning(
+                request,
+                f"⚠️ No se puede eliminar porque tiene {funcionarios_count} funcionario(s) asignado(s)."
+            )
+            return redirect("web:departamento_detail", pk=self.object.pk)
+
+        # ✅ NUEVO: bloqueo por tabla puente TipoDenunciaDepartamento
+        tipos_count = TipoDenunciaDepartamento.objects.filter(departamento=self.object).count()
+        if tipos_count > 0:
+            messages.error(
+                request,
+                f"❌ No se puede eliminar porque tiene {tipos_count} tipo(s) de denuncia asignado(s). "
+                "Primero elimina esas asignaciones."
+            )
+            return redirect("web:departamento_detail", pk=self.object.pk)
+
+        messages.success(request, "🗑️ Departamento eliminado.")
+        return super().post(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["denuncias_count"] = Denuncias.objects.filter(asignado_departamento=self.object).count()
+        ctx["funcionarios_count"] = Funcionarios.objects.filter(departamento=self.object).count()
+        ctx["tipos_count"] = TipoDenunciaDepartamento.objects.filter(departamento=self.object).count()
+        return ctx
+    
 
 # =========================================
 # WEB USERS (Django auth_user CRUD)
