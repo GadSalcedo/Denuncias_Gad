@@ -158,7 +158,7 @@
     border-radius: 50%;
     display: inline-block;
   }
-
+  .legend-asignada { background: #6f42c1; }
   .legend-pendiente { background: #fbbc04; }
   .legend-proceso   { background: #4285f4; }
   .legend-resuelta  { background: #34a853; }
@@ -424,7 +424,7 @@
           </div>
 
           <div class="map-legend">
-            <span class="map-legend-item"><span class="legend-dot legend-pendiente"></span> Pendiente</span>
+            <span class="map-legend-item"><span class="legend-dot legend-asignada"></span> Asignada</span>
             <span class="map-legend-item"><span class="legend-dot legend-proceso"></span> En proceso</span>
             <span class="map-legend-item"><span class="legend-dot legend-resuelta"></span> Resuelta</span>
             <span class="map-legend-item"><span class="legend-dot legend-rechazada"></span> Rechazada</span>
@@ -581,7 +581,7 @@
       pendiente: "#fbbc04",
       en_proceso: "#4285f4",
       resuelta: "#34a853",
-      rechazado: "#ea4335"
+      rechazada: "#ea4335"
     };
 
     function isValidCoord(lat, lng) {
@@ -594,8 +594,9 @@
 
     function badgeClass(estado) {
       if (estado === "resuelta") return "success";
-      if (estado === "en_proceso") return "primary";
-      if (estado === "rechazado") return "danger";
+      if (estado === "en_proceso") return "info";
+      if (estado === "rechazada") return "danger";
+      if (estado === "asignada") return "primary";
       return "warning";
     }
 

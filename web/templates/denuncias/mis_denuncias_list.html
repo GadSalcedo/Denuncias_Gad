@@ -17,6 +17,7 @@
                             <h4 class="mb-1">
                                 <i class="bi bi-person-badge me-2"></i>{{ funcionario.nombres }} {{ funcionario.apellidos }}
                             </h4>
+                            <br>
                             <p class="mb-0">
                                 <strong>Cargo:</strong> {{ funcionario.cargo|default:"Sin cargo" }} | 
                                 <strong>Departamento:</strong> {{ funcionario.departamento.nombre|default:"Sin departamento" }}
@@ -24,7 +25,7 @@
                         </div>
                         <div class="col-md-4 text-md-end">
                             <span class="badge bg-light text-info fs-6">
-                                <i class="bi bi-megaphone me-1"></i>{{ total_denuncias }} Denuncias Asignadas
+                                <i class="bi bi-megaphone me-1"></i>{{ total_denuncias }} Denuncias Tratadas
                             </span>
                         </div>
                     </div>
@@ -35,20 +36,20 @@
 
     <!-- Estadísticas Rápidas -->
     <div class="row mb-4">
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="card shadow-sm border-warning">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="text-muted mb-1">Pendientes</h6>
-                            <h3 class="mb-0 text-warning">{{ denuncias_pendientes }}</h3>
+                            <h6 class="text-muted mb-1">Faltantes</h6>
+                            <h3 class="mb-0 text-warning">{{ faltantes_departamento }}</h3>
                         </div>
                         <i class="bi bi-clock-history fs-1 text-warning opacity-50"></i>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="card shadow-sm border-info">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
@@ -61,7 +62,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="card shadow-sm border-success">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
@@ -70,6 +71,19 @@
                             <h3 class="mb-0 text-success">{{ denuncias_resueltas }}</h3>
                         </div>
                         <i class="bi bi-check-circle-fill fs-1 text-success opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-danger">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted mb-1">Rechazadas</h6>
+                            <h3 class="mb-0 text-danger">{{ denuncias_rechazadas }}</h3>
+                        </div>
+                        <i class="bi bi-x-circle-fill fs-1 text-danger opacity-50"></i>
                     </div>
                 </div>
             </div>
@@ -88,17 +102,20 @@
                             </label>
                             <select name="estado" id="estado" class="form-select" onchange="this.form.submit()">
                                 <option value="">Todos los estados</option>
-                                <option value="pendiente" {% if estado_actual == 'pendiente' %}selected{% endif %}>Pendiente</option>
+                               
                                 <option value="en_proceso" {% if estado_actual == 'en_proceso' %}selected{% endif %}>En Proceso</option>
                                 <option value="resuelta" {% if estado_actual == 'resuelta' %}selected{% endif %}>Resuelta</option>
+                                <option value="rechazada" {% if estado_actual == 'rechazada' %}selected{% endif %}>Rechazada</option>
+                            
                             </select>
+
                         </div>
                         <div class="col-md-4">
                             <label for="tipo_denuncia" class="form-label">
                                 <i class="bi bi-tags me-1"></i>Filtrar por Tipo
                             </label>
                             <select name="tipo_denuncia" id="tipo_denuncia" class="form-select" onchange="this.form.submit()">
-                                <option value="">Todos los tipos</option>
+                                <option value="">Tipos  de denuncias</option>
                                 {% for tipo in tipos_denuncia %}
                                 <option value="{{ tipo.id }}" {% if tipo_denuncia_actual == tipo.id|stringformat:"s" %}selected{% endif %}>
                                     {{ tipo.nombre }}
@@ -123,7 +140,7 @@
             <div class="card shadow-sm">
                 <div class="card-header bg-white border-bottom">
                     <h5 class="card-title mb-0">
-                        <i class="bi bi-list-check me-2"></i>Mis Denuncias Asignadas
+                        <i class="bi bi-list-check me-2"></i>Mis Denuncias
                     </h5>
                 </div>
                 <div class="card-body p-0">
@@ -131,7 +148,8 @@
                         <table class="table table-hover table-striped mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>ID</th>
+                                    
+                                    <!--<th>ID</th>-->
                                     <th>Fecha</th>
                                     <th>Tipo</th>
                                     <th>Ciudadano</th>
@@ -143,7 +161,7 @@
                             <tbody>
                                 {% for denuncia in denuncias %}
                                 <tr>
-                                    <td><strong>#{{ denuncia.id }}</strong></td>
+                                    <!--<td><strong>#{{ denuncia.id }}</strong></td>-->
                                     <td>
                                         {{ denuncia.created_at|date:"d/m/Y" }}<br>
                                         <small class="text-muted">{{ denuncia.created_at|date:"H:i" }}</small>
@@ -170,6 +188,10 @@
                                             <span class="badge bg-warning text-dark">
                                                 <i class="bi bi-clock me-1"></i>Pendiente
                                             </span>
+                                        {% elif denuncia.estado == 'asignada' %}
+                                            <span class="badge bg-secondary">
+                                                <i class="bi bi-inbox me-1"></i>Asignada
+                                            </span>
                                         {% elif denuncia.estado == 'en_proceso' %}
                                             <span class="badge bg-info">
                                                 <i class="bi bi-arrow-repeat me-1"></i>En Proceso
@@ -178,8 +200,12 @@
                                             <span class="badge bg-success">
                                                 <i class="bi bi-check-circle me-1"></i>Resuelta
                                             </span>
+                                        {% elif denuncia.estado == 'rechazada' %}
+                                            <span class="badge bg-danger">
+                                                <i class="bi bi-x-circle me-1"></i>Rechazada
+                                            </span>
                                         {% else %}
-                                            <span class="badge bg-secondary">{{ denuncia.estado }}</span>
+                                            <span class="badge bg-dark">{{ denuncia.estado }}</span>
                                         {% endif %}
                                     </td>
                                     

@@ -1240,7 +1240,7 @@ def crear_respuesta_denuncia(request, pk):
     except Exception as e:
         logger.exception("Fallo push Firebase: %s", e)
 
-    messages.success(request, "✅ Respuesta enviada correctamente.")
+    messages.success(request, " Respuesta enviada correctamente.")
     return redirect("web:denuncia_detail", pk=pk)
 
 class MisDenunciasListView(LoginRequiredMixin, ListView):
@@ -1287,16 +1287,37 @@ class MisDenunciasListView(LoginRequiredMixin, ListView):
 
         qs = self.get_queryset()
         context["total_denuncias"] = qs.count()
-        context["denuncias_pendientes"] = qs.filter(estado="pendiente").count()
+
+        # Conteos del queryset (del funcionario)
+        context["denuncias_asignadas"] = qs.filter(estado="asignada").count()
         context["denuncias_en_proceso"] = qs.filter(estado="en_proceso").count()
         context["denuncias_resueltas"] = qs.filter(estado="resuelta").count()
+        context["denuncias_rechazadas"] = qs.filter(estado="rechazada").count()  # ✅ nuevo
 
-        context["tipos_denuncia"] = TiposDenuncia.objects.filter(activo=True)
+        # Faltantes del DEPARTAMENTO (estado=asignada)
+        faltantes_dep = 0
+        tipos_qs = TiposDenuncia.objects.filter(activo=True)
+
+        if funcionario and getattr(funcionario, "departamento", None):
+            faltantes_dep = Denuncias.objects.filter(
+                asignado_departamento=funcionario.departamento,
+                estado="asignada",
+            ).count()
+
+            # ✅ Tipos SOLO del departamento:
+            # (asumiendo que TipoDenunciaDepartamento relaciona tipo_denuncia <-> departamento)
+            tipos_qs = TiposDenuncia.objects.filter(
+                activo=True,
+                tipodenunciadepartamento__departamento=funcionario.departamento
+            ).distinct().order_by("nombre")
+
+        context["faltantes_departamento"] = faltantes_dep
+        context["tipos_denuncia"] = tipos_qs
+
         context["estado_actual"] = self.request.GET.get("estado", "")
         context["tipo_denuncia_actual"] = self.request.GET.get("tipo_denuncia", "")
 
         return context
-
 
 # =========================================
 # TipoDenuncia ↔ Departamento
