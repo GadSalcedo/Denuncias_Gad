@@ -656,9 +656,27 @@ class GrupoListView(LoginRequiredMixin, CustomPermissionRequiredMixin, ListView)
     login_url = "web:login"
     ordering = ["name"]
     paginate_by = 10
-    
+
     def get_queryset(self):
-        return Group.objects.order_by("name")
+        return (
+            Group.objects
+            .order_by("name")
+            .annotate(
+                funcionarios_count=Count(
+                    "user",
+                    filter=Q(user__funcionario_link__isnull=False),
+                    distinct=True,
+                )
+            )
+        )
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+
+        for grupo in ctx["grupos"]:
+            grupo.can_delete = (grupo.funcionarios_count == 0)
+
+        return ctx
 
 
 class GrupoCreateView(CrudMessageMixin, LoginRequiredMixin, CustomPermissionRequiredMixin, CreateView):
@@ -719,6 +737,33 @@ class GrupoDeleteView(CrudMessageMixin, LoginRequiredMixin, CustomPermissionRequ
     permission_required = "auth.delete_group"
     login_url = "web:login"
 
+    def _funcionarios_count(self, grupo):
+        return grupo.user_set.filter(
+            funcionario_link__isnull=False
+        ).distinct().count()
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        funcionarios_count = self._funcionarios_count(self.object)
+        ctx["funcionarios_count"] = funcionarios_count
+        ctx["can_delete"] = (funcionarios_count == 0)
+        return ctx
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+
+        funcionarios_count = self._funcionarios_count(self.object)
+        if funcionarios_count > 0:
+            messages.error(
+                request,
+                f"❌ No se puede eliminar el grupo '{self.object.name}' porque tiene "
+                f"{funcionarios_count} funcionario(s) asignado(s). "
+                "Primero quita o reasigna esos funcionarios."
+            )
+            return redirect("web:grupo_detail", pk=self.object.pk)
+
+        messages.success(request, f"🗑️ Grupo '{self.object.name}' eliminado correctamente.")
+        return super().post(request, *args, **kwargs)
 
 # =========================================
 # Menús (solo superuser)

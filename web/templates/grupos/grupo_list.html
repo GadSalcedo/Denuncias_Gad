@@ -51,7 +51,10 @@
                 </td>
 
                 <td class="text-center">
+                  <span class="badge bg-secondary rounded-pill">{{ grupo.funcionarios_count }}</span>
+                  <!--
                   <span class="badge bg-secondary rounded-pill">{{ grupo.user_set.count }}</span>
+                  -->
                 </td>
 
                 <td class="text-end">
@@ -63,12 +66,19 @@
 </svg>
                     </a>
 
-                    <a href="{% url 'web:grupo_delete' grupo.pk %}" class="btn btn-sm btn-outline-danger"
-                       title="Eliminar" onclick="return confirm('¿Está seguro de eliminar este grupo?')">
-                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash2-fill" viewBox="0 0 16 16">
-  <path d="M2.037 3.225A.7.7 0 0 1 2 3c0-1.105 2.686-2 6-2s6 .895 6 2a.7.7 0 0 1-.037.225l-1.684 10.104A2 2 0 0 1 10.305 15H5.694a2 2 0 0 1-1.973-1.671zm9.89-.69C10.966 2.214 9.578 2 8 2c-1.58 0-2.968.215-3.926.534-.477.16-.795.327-.975.466.18.14.498.307.975.466C5.032 3.786 6.42 4 8 4s2.967-.215 3.926-.534c.477-.16.795-.327.975-.466-.18-.14-.498-.307-.975-.466z"/>
-</svg>
-                    </a>
+                    {% if grupo.can_delete %}
+  <a href="{% url 'web:grupo_delete' grupo.pk %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash2-fill" viewBox="0 0 16 16">
+      <path d="M2.037 3.225A.7.7 0 0 1 2 3c0-1.105 2.686-2 6-2s6 .895 6 2a.7.7 0 0 1-.037.225l-1.684 10.104A2 2 0 0 1 10.305 15H5.694a2 2 0 0 1-1.973-1.671zm9.89-.69C10.966 2.214 9.578 2 8 2c-1.58 0-2.968.215-3.926.534-.477.16-.795.327-.975.466.18.14.498.307.975.466C5.032 3.786 6.42 4 8 4s2.967-.215 3.926-.534c.477-.16.795-.327.975-.466-.18-.14-.498-.307-.975-.466z"/>
+    </svg>
+  </a>
+{% else %}
+  <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="No se puede eliminar porque tiene funcionarios asignados">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-lock-fill" viewBox="0 0 16 16">
+      <path d="M8 1a3 3 0 0 0-3 3v2H4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-1V4a3 3 0 0 0-3-3m2 5H6V4a2 2 0 1 1 4 0z"/>
+    </svg>
+  </button>
+{% endif %}
                   </div>
                 </td>
               </tr>
