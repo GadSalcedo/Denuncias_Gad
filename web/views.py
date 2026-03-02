@@ -832,6 +832,9 @@ class FaqDetailView(FuncionarioRequiredMixin, DetailView):
 
 
 
+#------------------------------
+#denundia list
+#---------------------
 class DenunciaListView(FuncionarioRequiredMixin, ListView):
     model = Denuncias
     template_name = "denuncias/denuncia_list.html"
@@ -843,6 +846,21 @@ class DenunciaListView(FuncionarioRequiredMixin, ListView):
     def _is_admin(self, user):
         return user.is_superuser or user.groups.filter(name="TICS_ADMIN").exists()
 
+    def _effective_departamento_id(self, user, funcionario):
+        """
+        Admin: usa el GET (puede ser vacío -> Todos)
+        Funcionario: fuerza su departamento siempre
+        """
+        dep_get = (self.request.GET.get("departamento") or "").strip()
+
+        if self._is_admin(user):
+            return dep_get  # "" o "4" etc
+
+        if funcionario and funcionario.departamento_id:
+            return str(funcionario.departamento_id)
+
+        return ""
+
     def get_queryset(self):
         qs = Denuncias.objects.select_related(
             "ciudadano", "tipo_denuncia", "asignado_departamento", "asignado_funcionario"
@@ -850,37 +868,51 @@ class DenunciaListView(FuncionarioRequiredMixin, ListView):
 
         user = self.request.user
         funcionario = get_funcionario_from_web_user(user)
+        is_admin = self._is_admin(user)
 
-        #  base por rol
-        if self._is_admin(user):
+        # base por rol
+        if is_admin:
             base = qs
         elif funcionario and funcionario.departamento_id:
             base = qs.filter(asignado_departamento_id=funcionario.departamento_id)
         else:
             return qs.none()
 
-        #  filtros
-        estado = self.request.GET.get("estado", "").strip()
+        # departamento efectivo
+        departamento_id = self._effective_departamento_id(user, funcionario)
+
+        # filtro estado
+        estado = (self.request.GET.get("estado") or "").strip()
         if estado:
             base = base.filter(estado=estado)
 
-        tipo = self.request.GET.get("tipo", "").strip()
+        # filtro departamento (solo admin)
+        if departamento_id and is_admin:
+            base = base.filter(asignado_departamento_id=departamento_id)
+
+        # filtro tipo (validar contra depto si hay depto efectivo)
+        tipo = (self.request.GET.get("tipo") or "").strip()
         if tipo:
-            base = base.filter(tipo_denuncia_id=tipo)
+            if departamento_id:
+                # Validar que el tipo pertenezca al depto usando tabla puente
+                ok_tipo = TiposDenuncia.objects.filter(
+                    id=tipo,
+                    activo=True,
+                    tipodenunciadepartamento__departamento_id=departamento_id,
+                ).exists()
 
-        departamento = self.request.GET.get("departamento", "").strip()
-        if departamento:
-            # admin puede filtrar cualquier depto
-            if self._is_admin(user):
-                base = base.filter(asignado_departamento_id=departamento)
-            # funcionario normal no puede “ver otros”
-            # (ignoramos el filtro si intenta otro)
-        
-        funcionario_get = self.request.GET.get("funcionario", "").strip()
-        if funcionario_get:
-            base = base.filter(asignado_funcionario_id=funcionario_get)
+                if ok_tipo:
+                    base = base.filter(tipo_denuncia_id=tipo)
+                # si no es del depto, se ignora (UX limpia)
+            else:
+                base = base.filter(tipo_denuncia_id=tipo)
 
-        q = self.request.GET.get("q", "").strip()
+        # (filtro funcionario lo dejaste comentado en template; aquí no lo usamos)
+        # funcionario_get = (self.request.GET.get("funcionario") or "").strip()
+        # if funcionario_get:
+        #     base = base.filter(asignado_funcionario_id=funcionario_get)
+
+        q = (self.request.GET.get("q") or "").strip()
         if q:
             base = base.filter(
                 Q(ciudadano__nombres__icontains=q)
@@ -899,36 +931,60 @@ class DenunciaListView(FuncionarioRequiredMixin, ListView):
         funcionario = get_funcionario_from_web_user(user)
         is_admin = self._is_admin(user)
 
-        #  combos (limitados por rol)
-        context["tipos_denuncia"] = TiposDenuncia.objects.filter(activo=True).order_by("nombre")
+        # departamento efectivo
+        departamento_id = self._effective_departamento_id(user, funcionario)
 
+        # Departamentos por rol
         if is_admin:
             context["departamentos"] = Departamentos.objects.filter(activo=True).order_by("nombre")
-            context["funcionarios"] = Funcionarios.objects.filter(activo=True).order_by("nombres")
         else:
             if funcionario and funcionario.departamento_id:
-                context["departamentos"] = Departamentos.objects.filter(id=funcionario.departamento_id, activo=True)
-                context["funcionarios"] = Funcionarios.objects.filter(
-                    departamento_id=funcionario.departamento_id, activo=True
-                ).order_by("nombres")
+                context["departamentos"] = Departamentos.objects.filter(
+                    id=funcionario.departamento_id, activo=True
+                )
             else:
                 context["departamentos"] = Departamentos.objects.none()
-                context["funcionarios"] = Funcionarios.objects.none()
 
-        #  valores actuales (para que se mantengan al refrescar)
+        # TIPOS dependientes del departamento (tabla puente)
+        tipos_qs = TiposDenuncia.objects.filter(activo=True).order_by("nombre")
+        if departamento_id:
+            tipos_qs = tipos_qs.filter(
+                tipodenunciadepartamento__departamento_id=departamento_id
+            ).distinct()
+        context["tipos_denuncia"] = tipos_qs
+
+        # Flags para template
+        context["is_admin"] = is_admin
+
+        # valores actuales (mantener selección)
         context["estado_actual"] = self.request.GET.get("estado", "")
-        context["tipo_actual"] = self.request.GET.get("tipo", "")
-        context["departamento_actual"] = self.request.GET.get("departamento", "")
-        context["funcionario_actual"] = self.request.GET.get("funcionario", "")
         context["q"] = self.request.GET.get("q", "")
 
-        #  querystring seguro (SIN page) para paginación
+        # forzar departamento_actual al efectivo (clave para funcionario)
+        context["departamento_actual"] = departamento_id
+
+        # tipo actual: si ya no existe en el combo filtrado, lo limpiamos
+        tipo_actual = self.request.GET.get("tipo", "")
+        if tipo_actual and not tipos_qs.filter(id=tipo_actual).exists():
+            tipo_actual = ""
+        context["tipo_actual"] = tipo_actual
+
+        # querystring seguro (SIN page) para paginación
         params = self.request.GET.copy()
         params.pop("page", None)
+
+        # si es funcionario, asegurar que su departamento vaya en la URL (consistencia)
+        if not is_admin and departamento_id:
+            params["departamento"] = departamento_id
+
+        # si el tipo fue invalidado, sacarlo de la URL
+        if not context["tipo_actual"]:
+            params.pop("tipo", None)
+
         context["querystring"] = params.urlencode()
 
         return context
-
+    
             
 from django.http import Http404
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator

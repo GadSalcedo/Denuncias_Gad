@@ -281,4 +281,4 @@ LOGGING = {
 #------------------------------
 #PUBLIC_SITE_URL = "https://denuncias-gad.onrender.com/"
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-SESSION_COOKIE_AGE = 60 * 60  # 1 hora (opcional)
+#SESSION_COOKIE_AGE = 60 * 60  # 1 hora (opcional)

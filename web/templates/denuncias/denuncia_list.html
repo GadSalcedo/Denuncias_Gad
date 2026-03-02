@@ -37,13 +37,36 @@
               <select name="estado" class="form-select" onchange="this.form.submit()">
                 <option value="" {% if not estado_actual %}selected{% endif %}>Todos</option>
                 <option value="pendiente"    {% if estado_actual == 'pendiente' %}selected{% endif %}>Pendiente</option>
-                <option value="en_revision"  {% if estado_actual == 'en_revision' %}selected{% endif %}>En revisión</option>
                 <option value="asignada"     {% if estado_actual == 'asignada' %}selected{% endif %}>Asignada</option>
                 <option value="en_proceso"   {% if estado_actual == 'en_proceso' %}selected{% endif %}>En proceso</option>
                 <option value="resuelta"     {% if estado_actual == 'resuelta' %}selected{% endif %}>Resuelta</option>
                 <option value="rechazada"    {% if estado_actual == 'rechazada' %}selected{% endif %}>Rechazada</option>
               </select>
             </div>
+
+            <div class="col-md-2">
+  <label class="form-label">Departamento</label>
+
+  {% if not is_admin %}
+    {# Funcionario: depto fijo (disabled) pero se envía por hidden #}
+    <input type="hidden" name="departamento" value="{{ departamento_actual }}">
+    <select class="form-select" disabled>
+      {% for d in departamentos %}
+        <option value="{{ d.id }}" selected>{{ d.nombre }}</option>
+      {% endfor %}
+    </select>
+  {% else %}
+    {# Admin: puede elegir #}
+    <select name="departamento" class="form-select" onchange="this.form.submit()">
+      <option value="" {% if not departamento_actual %}selected{% endif %}>Todos</option>
+      {% for d in departamentos %}
+        <option value="{{ d.id }}" {% if departamento_actual == d.id|stringformat:"s" %}selected{% endif %}>
+          {{ d.nombre }}
+        </option>
+      {% endfor %}
+    </select>
+  {% endif %}
+</div>
 
             <div class="col-md-2">
               <label class="form-label">Tipo</label>
@@ -57,18 +80,9 @@
               </select>
             </div>
 
-            <div class="col-md-2">
-              <label class="form-label">Departamento</label>
-              <select name="departamento" class="form-select" onchange="this.form.submit()">
-                <option value="" {% if not departamento_actual %}selected{% endif %}>Todos</option>
-                {% for d in departamentos %}
-                  <option value="{{ d.id }}" {% if departamento_actual == d.id|stringformat:"s" %}selected{% endif %}>
-                    {{ d.nombre }}
-                  </option>
-                {% endfor %}
-              </select>
-            </div>
+            
 
+            <!--
             <div class="col-md-2">
               <label class="form-label">Funcionario</label>
               <select name="funcionario" class="form-select" onchange="this.form.submit()">
@@ -80,8 +94,8 @@
                 {% endfor %}
               </select>
             </div>
-
-            <div class="col-md-3">
+            -->
+            <div class="col-md-4">
               <label class="form-label">Buscar</label>
               <input type="text"
                      name="q"
