@@ -126,6 +126,56 @@
     min-height: 460px;
   }
 
+  .chart-header-pro {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+
+  .dashboard-download-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    min-width: 148px;
+    padding: .78rem 1.2rem;
+    border: 0 !important;
+    border-radius: 18px !important;
+    background: linear-gradient(135deg, #5b5bd6 0%, #4b49ac 100%) !important;
+    color: #fff !important;
+    font-size: .95rem !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    box-shadow: 0 10px 22px rgba(75, 73, 172, 0.22);
+    transition: all .2s ease-in-out;
+    cursor: pointer;
+  }
+
+  .dashboard-download-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 24px rgba(75, 73, 172, 0.28);
+    color: #fff !important;
+    text-decoration: none !important;
+  }
+
+  .dashboard-download-btn:focus {
+    outline: none !important;
+    box-shadow: 0 0 0 0.2rem rgba(91, 91, 214, 0.25) !important;
+  }
+
+  .dashboard-download-btn i {
+    margin-right: .45rem;
+    font-size: 1rem;
+  }
+
+  /* Ocultar el link nativo feo de Chartkick si aparece */
+  .chartkick a[download] {
+    display: none !important;
+  }
+
   .map-toolbar {
     display: flex;
     justify-content: space-between;
@@ -158,6 +208,7 @@
     border-radius: 50%;
     display: inline-block;
   }
+
   .legend-asignada { background: #6f42c1; }
   .legend-pendiente { background: #fbbc04; }
   .legend-proceso   { background: #4285f4; }
@@ -207,6 +258,16 @@
 
     #map {
       height: 430px;
+    }
+
+    .dashboard-download-btn {
+      width: 100%;
+      min-width: auto;
+      border-radius: 14px !important;
+    }
+
+    .chart-header-pro {
+      align-items: stretch;
     }
   }
 </style>
@@ -261,6 +322,7 @@
       </div>
     </div>
   </div>
+
   <div class="col-md-6 col-xl-3 grid-margin">
     <div class="d-flex flex-column h-100" style="gap: 1rem;">
       <div class="card dashboard-mini-kpi-card kpi-resuelta">
@@ -287,8 +349,20 @@
   <div class="col-lg-6 grid-margin stretch-card">
     <div class="card dashboard-section-card w-100">
       <div class="card-body">
-        <p class="soft-title">Denuncias por Estado</p>
-        {{ chart_estado_denuncias }}
+        <div class="chart-header-pro">
+          <p class="soft-title mb-0">Denuncias por Estado</p>
+          <button
+            type="button"
+            class="dashboard-download-btn"
+            data-export-target="chart-estado-wrap"
+            data-export-file="denuncias_por_estado.png">
+            <i class="ti-download"></i> Descargar
+          </button>
+        </div>
+
+        <div id="chart-estado-wrap">
+          {{ chart_estado_denuncias }}
+        </div>
       </div>
     </div>
   </div>
@@ -296,15 +370,19 @@
   <div class="col-lg-6 grid-margin stretch-card">
     <div class="card dashboard-section-card w-100">
       <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="chart-header-pro">
           <p class="soft-title mb-0">Denuncias por Departamento</p>
-          <button type="button" class="btn btn-sm btn-primary" id="btnDescargarDeptChart">
+          <button
+            type="button"
+            class="dashboard-download-btn"
+            data-export-target="chart-departamentos-wrap"
+            data-export-file="denuncias_por_departamento.png">
             <i class="ti-download"></i> Descargar
           </button>
         </div>
 
         {% if dept_chart_values %}
-          <div class="chart-canvas-box chart-canvas-box-lg">
+          <div id="chart-departamentos-wrap" class="chart-canvas-box chart-canvas-box-lg">
             <canvas id="departamentosChart"></canvas>
           </div>
         {% else %}
@@ -320,8 +398,20 @@
   <div class="col-lg-6 grid-margin stretch-card">
     <div class="card dashboard-section-card w-100">
       <div class="card-body">
-        <p class="soft-title">Denuncias por Semana</p>
-        {{ chart_denuncias_semana }}
+        <div class="chart-header-pro">
+          <p class="soft-title mb-0">Denuncias por Semana</p>
+          <button
+            type="button"
+            class="dashboard-download-btn"
+            data-export-target="chart-semana-wrap"
+            data-export-file="denuncias_por_semana.png">
+            <i class="ti-download"></i> Descargar
+          </button>
+        </div>
+
+        <div id="chart-semana-wrap">
+          {{ chart_denuncias_semana }}
+        </div>
       </div>
     </div>
   </div>
@@ -329,8 +419,20 @@
   <div class="col-lg-6 grid-margin stretch-card">
     <div class="card dashboard-section-card w-100">
       <div class="card-body">
-        <p class="soft-title">Denuncias por Mes</p>
-        {{ chart_denuncias_mes }}
+        <div class="chart-header-pro">
+          <p class="soft-title mb-0">Denuncias por Mes</p>
+          <button
+            type="button"
+            class="dashboard-download-btn"
+            data-export-target="chart-mes-wrap"
+            data-export-file="denuncias_por_mes.png">
+            <i class="ti-download"></i> Descargar
+          </button>
+        </div>
+
+        <div id="chart-mes-wrap">
+          {{ chart_denuncias_mes }}
+        </div>
       </div>
     </div>
   </div>
@@ -341,8 +443,20 @@
   <div class="col-lg-6 grid-margin stretch-card">
     <div class="card dashboard-section-card w-100">
       <div class="card-body">
-        <p class="soft-title">Ciudadanos con más denuncias (Top 10)</p>
-        {{ chart_ciudadanos_top }}
+        <div class="chart-header-pro">
+          <p class="soft-title mb-0">Ciudadanos con más denuncias (Top 10)</p>
+          <button
+            type="button"
+            class="dashboard-download-btn"
+            data-export-target="chart-ciudadanos-wrap"
+            data-export-file="ciudadanos_top_10.png">
+            <i class="ti-download"></i> Descargar
+          </button>
+        </div>
+
+        <div id="chart-ciudadanos-wrap">
+          {{ chart_ciudadanos_top }}
+        </div>
       </div>
     </div>
   </div>
@@ -350,8 +464,20 @@
   <div class="col-lg-6 grid-margin stretch-card">
     <div class="card dashboard-section-card w-100">
       <div class="card-body">
-        <p class="soft-title">Denuncias por Tipo</p>
-        {{ chart_kpi7 }}
+        <div class="chart-header-pro">
+          <p class="soft-title mb-0">Denuncias por Tipo</p>
+          <button
+            type="button"
+            class="dashboard-download-btn"
+            data-export-target="chart-tipo-wrap"
+            data-export-file="denuncias_por_tipo.png">
+            <i class="ti-download"></i> Descargar
+          </button>
+        </div>
+
+        <div id="chart-tipo-wrap">
+          {{ chart_kpi7 }}
+        </div>
       </div>
     </div>
   </div>
@@ -450,7 +576,68 @@
 
 <script>
   let departamentosChartInstance = null;
+
+  function showChartToast(type, title, message) {
+    if (!window.iziToast) {
+      alert(message);
+      return;
+    }
+
+    iziToast[type]({
+      title: title,
+      message: message,
+      position: "bottomRight",
+      timeout: 2500
+    });
+  }
+
+  function exportChartFromContainer(targetId, filename) {
+    const container = document.getElementById(targetId);
+
+    if (!container) {
+      showChartToast("warning", "Gráfico", "No se encontró el contenedor del gráfico.");
+      return;
+    }
+
+    let canvas = container.querySelector("canvas");
+
+    if (!canvas && targetId === "chart-departamentos-wrap" && departamentosChartInstance) {
+      canvas = departamentosChartInstance.canvas;
+    }
+
+    if (!canvas) {
+      const fallbackDownload = container.querySelector("a[download]");
+      if (fallbackDownload) {
+        fallbackDownload.click();
+        return;
+      }
+
+      showChartToast("warning", "Gráfico", "No se encontró el canvas del gráfico para descargar.");
+      return;
+    }
+
+    try {
+      const link = document.createElement("a");
+      link.href = canvas.toDataURL("image/png", 1.0);
+      link.download = filename || "grafico.png";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error(error);
+      showChartToast("error", "Gráfico", "No se pudo descargar la imagen del gráfico.");
+    }
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll("[data-export-target]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const targetId = this.getAttribute("data-export-target");
+        const filename = this.getAttribute("data-export-file") || "grafico.png";
+        exportChartFromContainer(targetId, filename);
+      });
+    });
+
     const deptCanvas = document.getElementById("departamentosChart");
 
     if (deptCanvas) {
@@ -533,18 +720,6 @@
         }
       });
     }
-    const btnDescargarDeptChart = document.getElementById("btnDescargarDeptChart");
-
-    if (btnDescargarDeptChart) {
-      btnDescargarDeptChart.addEventListener("click", function () {
-        if (!departamentosChartInstance) return;
-
-        const link = document.createElement("a");
-        link.href = departamentosChartInstance.toBase64Image("image/png", 1);
-        link.download = "denuncias_por_departamento.png";
-        link.click();
-      });
-    }
   });
 
   window.initMap = function () {
@@ -581,7 +756,8 @@
       pendiente: "#fbbc04",
       en_proceso: "#4285f4",
       resuelta: "#34a853",
-      rechazada: "#ea4335"
+      rechazada: "#ea4335",
+      asignada: "#6f42c1"
     };
 
     function isValidCoord(lat, lng) {
