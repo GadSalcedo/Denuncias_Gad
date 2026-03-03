@@ -73,11 +73,20 @@ def seed_data(apps, schema_editor):
     # =========================
     # 4) Permisos (ManyToMany)
     # =========================
-    # Admin ve todo
+    # Admin ve todo MENOS "Mis denuncias"
     for menu in Menus.objects.all():
         menu.permisos.add(g_admin)
 
-    # Funcionario ve algunos por NOMBRE (no por ID)
+    # Quitar "Mis denuncias" al admin
+    mis_denuncias_menu = Menus.objects.filter(
+        nombre="Mis denuncias",
+        padre=menu_objs["Denuncias"]
+    ).first()
+
+    if mis_denuncias_menu:
+        mis_denuncias_menu.permisos.remove(g_admin)
+
+    # Funcionario ve algunos por NOMBRE
     funcionario_allow = {"Denuncias", "Listado", "Mis denuncias", "Página Web"}
 
     for menu in Menus.objects.filter(nombre__in=funcionario_allow):
