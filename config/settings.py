@@ -185,7 +185,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 #STATIC_URL = "/static/"
 #STATICFILES_DIRS = [BASE_DIR / "static"]  # your local static source folder
 #STATIC_ROOT = BASE_DIR / "staticfiles"    # collectstatic output
-#STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 #
 #MEDIA_URL = "/media/"
 #MEDIA_ROOT = os.path.join(BASE_DIR, "media")
@@ -273,8 +273,14 @@ if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    CSRF_TRUSTED_ORIGINS = ["https://*.onrender.com"]
-
+    CSRF_TRUSTED_ORIGINS = [
+    "https://*.onrender.com",
+    "http://www.salcedo.gob.ec",
+    "http://salcedo.gob.ec",
+    "http://10.10.80.189",
+    "https://www.salcedo.gob.ec",
+    "https://salcedo.gob.ec"
+]
 #------------------------------
 # para ver erroes en la terminal de render
 #------------------------------

@@ -145,7 +145,7 @@ GitHub.sublime-settings
 bootstrap.ps1
 
 # Archivos generados por Django / Docker / Gunicorn
-staticfiles/
+#staticfiles/
 gunicorn.ctl
 *.pid
 *.sock
