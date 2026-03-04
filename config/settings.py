@@ -34,8 +34,14 @@ DEBUG = config("DEBUG", cast=bool, default=False)
 # Comma-separated list: "localhost,127.0.0.1,.onrender.com"
 ALLOWED_HOSTS = [h.strip() for h in config(
     "ALLOWED_HOSTS",
-    default="localhost,127.0.0.1,.onrender.com,10.10.80.189,www.salcedo.gob.ec,.gob.ec,salcedo.gob.ec"
+    default="192.168.0.189,10.10.80.189,www.salcedo.gob.ec,salcedo.gob.ec,localhost,127.0.0.1"
 ).split(",") if h.strip()]
+
+# Trusted origins for CSRF (important for IP-based access)
+CSRF_TRUSTED_ORIGINS = [o.strip() for o in config(
+    "CSRF_TRUSTED_ORIGINS",
+    default="http://192.168.0.189:8000,http://10.10.80.189:8000,https://www.salcedo.gob.ec,https://salcedo.gob.ec"
+).split(",") if o.strip()]
 
 # ------------------------------------------------------------
 # Application definition
