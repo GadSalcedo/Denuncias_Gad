@@ -168,37 +168,23 @@ USE_TZ = True
 # Static & media (WhiteNoise)
 # ------------------------------------------------------------
 STATIC_URL = "/static/"
-STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
-
-MEDIA_URL = "/media/"
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+STATICFILES_DIRS = [BASE_DIR / "static"]
 
 STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
 
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# ------------------------------------------------------------
-# Static & media (WhiteNoise) old
-# ------------------------------------------------------------
-#STATIC_URL = "/static/"
-#STATICFILES_DIRS = [BASE_DIR / "static"]  # your local static source folder
-#STATIC_ROOT = BASE_DIR / "staticfiles"    # collectstatic output
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-#
-#MEDIA_URL = "/media/"
-#MEDIA_ROOT = os.path.join(BASE_DIR, "media")
-###MEDIA_ROOT = BASE_DIR / "media"
-#
-##DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-#
 # ------------------------------------------------------------
 # Auth / redirects
 # ------------------------------------------------------------
