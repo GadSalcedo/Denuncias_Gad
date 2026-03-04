@@ -167,7 +167,10 @@ USE_TZ = True
 # ------------------------------------------------------------
 # Static & media (WhiteNoise)
 # ------------------------------------------------------------
-STATIC_URL = "/static/"
+# Usamos /web/static/ para que las peticiones pasen a través del
+# proxy inverso institucional (salcedo.gob.ec), que solo reenvía
+# rutas bajo /web/ al servidor Django.
+STATIC_URL = "/web/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
