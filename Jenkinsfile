@@ -119,9 +119,9 @@ def deployTo(target) {
 
     def remotePath = "${REMOTE_BASE_PATH}"
     def timestamp = new Date().format("yyyyMMdd-HHmmss")
-    def backupTag = "${APP_NAME}:backup-${timestamp}"
+    def backupTag = "${CONTAINER}:backup-${timestamp}"
     def backupFolder = "/respaldos_docker/${target.name}/${APP_NAME}"
-    def tarFile = "${APP_NAME}-${timestamp}.tar"
+    def tarFile = "${CONTAINER}-${timestamp}.tar"
     def tarPath = "${backupFolder}/${tarFile}"
 
     echo "🚀 Iniciando despliegue en ${target.host}..."
@@ -129,44 +129,30 @@ def deployTo(target) {
     // Crear directorio remoto si no existe
     sshCommand remote: remote, command: "mkdir -p ${remotePath}"
 
-    // SOLUCIÓN SEGURA Y ROBUSTA: Construcción local y transferencia de imagen (Docker Save/Load)
-    // Esto garantiza que lo que se probó en Jenkins sea EXACTAMENTE lo que corre en el servidor.
-    
-    sh "docker build -t ${APP_NAME}:latest ."
-    sh "docker save ${APP_NAME}:latest | gzip > ${APP_NAME}.tar.gz"
-    
-    echo "📦 Transfiriendo imagen comprimida al servidor..."
-    sshPut remote: remote, from: "${APP_NAME}.tar.gz", into: "/tmp/${APP_NAME}.tar.gz"
-    
-    echo "📥 Cargando imagen en el servidor remoto..."
-    sshCommand remote: remote, command: """
-        gunzip -c /tmp/${APP_NAME}.tar.gz | docker load
-        rm /tmp/${APP_NAME}.tar.gz
-    """
+    // Sincronizar archivos necesarios
+    // 1. Enviamos el código fuente comprimido (método compatible con el script Java del usuario)
+    sh "tar -czf project.tar.gz --exclude='.git' --exclude='__pycache__' --exclude='media' --exclude='static' --ignore-failed-read ."
+    sshPut remote: remote, from: "project.tar.gz", into: "${remotePath}/project.tar.gz"
+    sshCommand remote: remote, command: "cd ${remotePath} && tar -xzf project.tar.gz && rm project.tar.gz"
 
-    // Sincronizar archivos de configuración y archivos necesarios para ejecución
-    // Solo enviamos lo necesario para ejecutar, el código fuente ya está en la imagen Docker.
-    // Incluimos .env si es necesario, o asegúrate de que esté en el servidor.
-    sh "tar -czf config.tar.gz docker-compose.yml entrypoint.sh"
-    sshPut remote: remote, from: "config.tar.gz", into: "${remotePath}/config.tar.gz"
-    sshCommand remote: remote, command: "cd ${remotePath} && tar -xzf config.tar.gz && rm config.tar.gz"
-
-    // IMPORTANTE: Asegúrate de que el archivo .env exista en el servidor remoto en ${remotePath}/.env 
-    // o cárgalo aquí si es seguro hacerlo (aunque se recomienda manejar secretos vía Jenkins Credentials).
+    // 2. Enviamos Dockerfile y docker-compose explicitamente (asegurando integridad)
+    sshPut remote: remote, from: "Dockerfile", into: "${remotePath}/Dockerfile"
+    sshPut remote: remote, from: "docker-compose.yml", into: "${remotePath}/docker-compose.yml"
+    sshPut remote: remote, from: "entrypoint.sh", into: "${remotePath}/entrypoint.sh"
 
     sshCommand remote: remote, command: """
         set -e
 
         echo '🧹 Limpiando imágenes huérfanas y temporales para liberar espacio...'
         docker image prune -f || true
-        rm -f /tmp/${APP_NAME}-*.tar
+        rm -f /tmp/${CONTAINER}-*.tar
 
         echo '🧹 Verificando y eliminando respaldos antiguos (más de 2 días)...'
         if [ -d "${backupFolder}" ]; then
-            find ${backupFolder} -name "${APP_NAME}-*.tar" -type f -mtime +2 -print -delete
+            find ${backupFolder} -name "${CONTAINER}-*.tar" -type f -mtime +2 -print -delete
         fi
 
-        # Intentar respaldar la imagen 'web' actual (asumiendo que tiene el tag del APP_NAME o similar)
+        # Respaldar la imagen actual antes de reconstruir
         if docker image inspect ${APP_NAME}_web:latest >/dev/null 2>&1; then
             echo '🔄 Respaldando imagen actual como ${backupTag}...'
             docker tag ${APP_NAME}_web:latest ${backupTag}
@@ -190,10 +176,10 @@ def deployTo(target) {
         fi
     """
 
-    // Levantar el stack completo (incluye db) para asegurar que las dependencias se cumplan
+    // Levantar con docker-compose usando build (estilo del script Java adaptado a docker-compose)
     sshCommand remote: remote, command: """
         cd ${remotePath}
-        docker compose up -d
+        docker compose up -d --no-deps --build web
     """
 
     // Limpieza final
