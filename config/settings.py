@@ -34,7 +34,7 @@ DEBUG = config("DEBUG", cast=bool, default=False)
 # Comma-separated list: "localhost,127.0.0.1,.onrender.com"
 ALLOWED_HOSTS = [h.strip() for h in config(
     "ALLOWED_HOSTS",
-    default="localhost,127.0.0.1,.onrender.com,10.10.80.189,.gob.ec,salcedo.gob.ec"
+    default="localhost,127.0.0.1,.onrender.com,10.10.80.189,www.salcedo.gob.ec,.gob.ec,salcedo.gob.ec"
 ).split(",") if h.strip()]
 
 # ------------------------------------------------------------
