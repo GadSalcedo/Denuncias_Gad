@@ -129,14 +129,30 @@ def deployTo(target) {
     // Crear directorio remoto si no existe
     sshCommand remote: remote, command: "mkdir -p ${remotePath}"
 
-    // Sincronizar archivos necesarios (Dockerfile, docker-compose, código fuente, etc.)
-    // En lugar de enviar un JAR, enviamos todo el contexto del proyecto o lo que necesite el build.
-    // Nota: sshPut puede ser lento para muchos archivos pequeños. 
-    // En entornos reales se suele usar git pull en el servidor o enviar un tar.gz comprimido.
+    // SOLUCIÓN SEGURA Y ROBUSTA: Construcción local y transferencia de imagen (Docker Save/Load)
+    // Esto garantiza que lo que se probó en Jenkins sea EXACTAMENTE lo que corre en el servidor.
     
-    sh "tar -czf project.tar.gz --exclude='.git' --exclude='__pycache__' --exclude='media' --exclude='static' ."
-    sshPut remote: remote, from: "project.tar.gz", into: "${remotePath}/project.tar.gz"
-    sshCommand remote: remote, command: "cd ${remotePath} && tar -xzf project.tar.gz && rm project.tar.gz"
+    sh "docker build -t ${APP_NAME}:latest ."
+    sh "docker save ${APP_NAME}:latest | gzip > ${APP_NAME}.tar.gz"
+    
+    echo "📦 Transfiriendo imagen comprimida al servidor..."
+    sshPut remote: remote, from: "${APP_NAME}.tar.gz", into: "/tmp/${APP_NAME}.tar.gz"
+    
+    echo "📥 Cargando imagen en el servidor remoto..."
+    sshCommand remote: remote, command: """
+        gunzip -c /tmp/${APP_NAME}.tar.gz | docker load
+        rm /tmp/${APP_NAME}.tar.gz
+    """
+
+    // Sincronizar archivos de configuración y archivos necesarios para ejecución
+    // Solo enviamos lo necesario para ejecutar, el código fuente ya está en la imagen Docker.
+    // Incluimos .env si es necesario, o asegúrate de que esté en el servidor.
+    sh "tar -czf config.tar.gz docker-compose.yml entrypoint.sh"
+    sshPut remote: remote, from: "config.tar.gz", into: "${remotePath}/config.tar.gz"
+    sshCommand remote: remote, command: "cd ${remotePath} && tar -xzf config.tar.gz && rm config.tar.gz"
+
+    // IMPORTANTE: Asegúrate de que el archivo .env exista en el servidor remoto en ${remotePath}/.env 
+    // o cárgalo aquí si es seguro hacerlo (aunque se recomienda manejar secretos vía Jenkins Credentials).
 
     sshCommand remote: remote, command: """
         set -e
@@ -174,11 +190,10 @@ def deployTo(target) {
         fi
     """
 
-    // Levantar con docker-compose
-    // Usamos --build para reconstruir la imagen de Django con el nuevo código
+    // Levantar el stack completo (incluye db) para asegurar que las dependencias se cumplan
     sshCommand remote: remote, command: """
         cd ${remotePath}
-        docker compose up -d --no-deps --build web
+        docker compose up -d
     """
 
     // Limpieza final
