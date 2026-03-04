@@ -179,7 +179,7 @@ def deployTo(target) {
     // Levantar con docker-compose usando build (estilo del script Java adaptado a docker-compose)
     sshCommand remote: remote, command: """
         cd ${remotePath}
-        docker compose up -d --no-deps --build web
+        docker compose up -d --build
     """
 
     // Limpieza final
