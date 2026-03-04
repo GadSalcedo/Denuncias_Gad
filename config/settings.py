@@ -263,16 +263,21 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    # Asegura que las cookies solo se envíen por HTTPS
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+    # Forzar que el STATIC_URL use HTTPS si se accede por el dominio
+    # STATIC_URL = "https://www.salcedo.gob.ec/static/" 
+    
     CSRF_TRUSTED_ORIGINS = [
-    "https://*.onrender.com",
-    "http://www.salcedo.gob.ec",
-    "http://salcedo.gob.ec",
-    "http://10.10.80.189",
-    "https://www.salcedo.gob.ec",
-    "https://salcedo.gob.ec"
-]
+        "https://*.onrender.com",
+        "http://www.salcedo.gob.ec",
+        "http://salcedo.gob.ec",
+        "http://10.10.80.189",
+        "http://192.168.0.189:8000",
+        "https://www.salcedo.gob.ec",
+        "https://salcedo.gob.ec"
+    ]
 #------------------------------
 # para ver erroes en la terminal de render
 #------------------------------
