@@ -27,7 +27,15 @@ def init_firebase():
 
     try:
         if not firebase_admin._apps:
-            cred = credentials.Certificate(path)
+            import json
+            with open(path, 'r', encoding='utf-8') as f:
+                info = json.load(f)
+            
+            # Limpiar posibles escapes mal interpretados en la clave privada
+            if 'private_key' in info and isinstance(info['private_key'], str):
+                info['private_key'] = info['private_key'].replace('\\n', '\n')
+            
+            cred = credentials.Certificate(info)
             firebase_admin.initialize_app(cred)
             logger.info("[FCM] Inicializado correctamente")
         _initialized = True
