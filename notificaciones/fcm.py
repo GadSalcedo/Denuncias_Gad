@@ -16,21 +16,23 @@ def init_firebase():
         return
 
     path = str(getattr(settings, "FIREBASE_SERVICE_ACCOUNT_PATH", "")).strip()
-    logger.info(f"[FCM] Service account path: {path}")
+    logger.info(f"[FCM] Intentando inicializar con: {path}")
 
     if not path or not os.path.exists(path):
-        logger.warning(f"[FCM] Service account no encontrado: {path}. Push deshabilitado.")
-        _initialized = True
+        logger.warning(f"[FCM] Archivo de credenciales no encontrado en: {path}. Push deshabilitado.")
+        # No marcamos _initialized = True para permitir reintento si el archivo aparece,
+        # aunque en Django esto requeriría reinicio usualmente. 
+        # Pero lo más importante es que send_push detecte que no hubo éxito.
         return
 
     try:
-        cred = credentials.Certificate(path)
-        firebase_admin.initialize_app(cred)
-        logger.info("[FCM] Inicializado correctamente")
+        if not firebase_admin._apps:
+            cred = credentials.Certificate(path)
+            firebase_admin.initialize_app(cred)
+            logger.info("[FCM] Inicializado correctamente")
+        _initialized = True
     except Exception as e:
         logger.exception(f"[FCM] Error inicializando Firebase: {e}")
-    finally:
-        _initialized = True
 
 
 def send_push(tokens: list[str], title: str, body: str, data: dict | None = None) -> int:
@@ -39,8 +41,8 @@ def send_push(tokens: list[str], title: str, body: str, data: dict | None = None
 
     init_firebase()
 
-    # Si Firebase no se inicializó (por ejemplo falta el JSON)
-    if not firebase_admin._apps:
+    # Verificamos si realmente hay una app inicializada
+    if not _initialized or not firebase_admin._apps:
         logger.warning("[FCM] Firebase no inicializado. Push omitido.")
         return 0
 
