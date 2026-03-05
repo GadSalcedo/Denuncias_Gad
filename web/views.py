@@ -1061,19 +1061,31 @@ class DenunciaDetailView(FuncionarioRequiredMixin, DetailView):
 
         return obj
 
+    def _fix_media_url(self, u: str) -> str:
+        if not u:
+            return u
+        # si viene con IP interna, cámbiala al dominio con /web (porque tu proxy solo pasa /web)
+        return (u
+            .replace("http://192.168.0.189:8000", "https://www.salcedo.gob.ec/web")
+            .replace("http://192.168.0.189", "https://www.salcedo.gob.ec/web")
+        )
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         denuncia = self.object
         user = self.request.user
-        # =========================
-        # Documentos del ciudadano (cédula frontal / trasera)
-        # =========================
+
         doc_ciudadano = (
             CiudadanoDocumentos.objects
             .filter(ciudadano=denuncia.ciudadano)
             .order_by("-created_at")
             .first()
         )
+
+        if doc_ciudadano:
+            doc_ciudadano.url_frontal = self._fix_media_url(doc_ciudadano.url_frontal)
+            doc_ciudadano.url_trasera = self._fix_media_url(doc_ciudadano.url_trasera)
+
         context["doc_ciudadano"] = doc_ciudadano
 
         # =========================

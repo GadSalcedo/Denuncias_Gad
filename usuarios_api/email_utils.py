@@ -15,7 +15,7 @@ from django.core.mail import EmailMultiAlternatives
 #        email.send()
 #        return True
 #    except Exception as e:
-#        print("❌ Error enviando correo:", e)
+#        print(" Error enviando correo:", e)
 #        return False
 from .gmail_api import send_gmail_html
 
