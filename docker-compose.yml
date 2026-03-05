@@ -30,7 +30,7 @@ services:
     volumes:
       - .:/app
       - media_data:/app/media
-      - /apis_docker/denuncias-gad/serviceAccountKey.json:/run/secrets/firebase.json:ro
+      - ./serviceAccountKey.json:/run/secrets/firebase.json:ro
     command: sh /app/entrypoint.sh
 
 volumes:
