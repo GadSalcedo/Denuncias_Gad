@@ -18,8 +18,8 @@ def init_firebase():
     path = str(getattr(settings, "FIREBASE_SERVICE_ACCOUNT_PATH", "")).strip()
     logger.info(f"[FCM] Intentando inicializar con: {path}")
 
-    if not path or not os.path.exists(path):
-        logger.warning(f"[FCM] Archivo de credenciales no encontrado en: {path}. Push deshabilitado.")
+    if not path or not os.path.exists(path) or not os.path.isfile(path):
+        logger.warning(f"[FCM] Archivo de credenciales no válido o no encontrado en: {path}. Push deshabilitado.")
         # No marcamos _initialized = True para permitir reintento si el archivo aparece,
         # aunque en Django esto requeriría reinicio usualmente. 
         # Pero lo más importante es que send_push detecte que no hubo éxito.
