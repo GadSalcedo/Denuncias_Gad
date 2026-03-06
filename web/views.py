@@ -193,10 +193,7 @@ def get_uuid() -> str:
     return str(uuid.uuid4())
 
 
-def get_funcionario_from_web_user(user):
-    if not user or user.is_anonymous:
-        return None
-    
+def get_funcionario_from_web_user(user):    
     # 1) Si hay tabla puente
     link = FuncionarioWebUser.objects.select_related("funcionario").filter(web_user=user).first()
     if link and link.funcionario:
